@@ -12,7 +12,9 @@ class Cluster(object):
     def __init__(self, stdin=sys.stdin, stdout=sys.stdout, 
                  stderr=sys.stderr, pidfile=None,
                  args=sys.argv[1:]):
-        self.args = args
+        self.starts = self._extract_lines(args[0])
+        self.stops = self._extract_lines(args[1])
+        self.restarts = self._extract_lines(args[2])
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -20,53 +22,67 @@ class Cluster(object):
             self.pidfile = 'cluster.pid'
         else:
             self.pidfile = pidfile
+    
+    def _extract_lines(self, line):
+        return [arg.strip() for arg in line.split('\n')
+                if arg.strip() != '']
 
-    def before_stop(self):
-        """Runned before the daemon is stopped"""
-        self.stderr.write('Cluster is going down...\n')
-        self.stderr.flush()
-        # running subscripts
-        args = [arg.strip() for arg in self.args[1].split('\n')]
-        for command in args:
+    def _run_commands(self, pool):
+        for command in pool:
             res = self._system(command)
             if not res:
                 self.stderr.write('Command "%s" failed\n' % command)  
                 self.stderr.flush()
                 sys.exit(1)
 
+    def before_start(self):
+        """Runned before the daemon is starting"""
+        self.stderr.write('Cluster is starting...\n')
+        self.stderr.flush()
+        self._run_commands(self.starts)
+ 
+    def before_stop(self):
+        """Runned before the daemon is stopped"""
+        self.stderr.write('Cluster is going down...\n')
+        self.stderr.flush()
+        self._run_commands(self.stops)
+ 
+    def before_restart(self):
+        """Runned before the daemon is restarting"""
+        self.stderr.write('Cluster is restarting...\n')
+        self.stderr.flush()
+        self._run_commands(self.restarts)
+        
     def _system(self, command, input=''):
         self.stderr.write('Running %s\n' % command)
         self.stderr.flush()
-        #i, o, e = os.popen3(command)
-        #if input:
-        #    i.write(input)
-        #i.close()
-        #result = o.read() + e.read()
-        #o.close()
-        #e.close()
-        res = os.system(command)
-        return res == 0
+        i, o, e = os.popen3(command)
+        if input:
+            i.write(input)
+        i.close()
+        result = o.read() + e.read()
+        o.close()
+        e.close()
+        self.stderr.write(result)
+        self.stderr.flush() 
+        return True  # see how to return false in case of a problem
 
     def run(self):
         """Dameon code"""
         self.stderr.write('Cluster is alive...\n')
         self.stderr.flush()
-        
-        # running subscripts
-        args = [arg.strip() for arg in self.args[0].split('\n')]
-        for command in args:
-            res = self._system(command)
-            if not res:
-                self.stderr.write('Command "%s" failed\n' % command)  
-                self.stderr.flush()
-                sys.exit(1)
+        # now looping for ever
         while True:
             time.sleep(1)
 
 def main(args=None):
     if args is None:
-        args = sys.argv[1:]
+        args = ([], [], [])
     instance = Cluster(args=args)
     daemon = Daemon(instance)
-    daemon.startstop()
+    if len(sys.argv) != 2:
+        print 'usage: %s start|stop|restart' % sys.argv[0]
+        sys.exit(1)
+    action = sys.argv[1]
+    daemon.startstop(action)
 

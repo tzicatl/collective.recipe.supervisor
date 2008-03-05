@@ -116,9 +116,8 @@ class Daemon(object):
     
         sys.stderr.write("%s\n" % self.startmsg % pid)
         sys.stderr.flush()
-    
         if self.instance.pidfile:
-            file(self.instance.pidfile,'w+').write("%s\n" % pid)
+            file(self.instance.pidfile, 'w+').write("%s\n" % pid)
     
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
@@ -127,48 +126,80 @@ class Daemon(object):
         # now let's run the code
         self.instance.run()
 
-    def startstop(self):
+    def _stop(self, pid):
+        """stopping"""
+        if hasattr(self.instance, 'before_stop'):
+            self.instance.before_stop()
+        if not pid:
+            mess = "Could not stop, pid file '%s' missing.\n"
+            sys.stderr.write(mess % self.instance.pidfile)
+            sys.exit(1)
+        try:
+            while 1:
+                os.kill(pid, SIGTERM)
+                time.sleep(1)
+            sys.stderr.write("\n%s\n" % self.stopmsg % pid)
+            sys.stderr.flush()
+        except OSError, err:
+            err = str(err)
+            if err.find("No such process") > 0:
+                os.remove(self.instance.pidfile)
+                sys.exit(0)
+            else:
+                sys.stderr.write('%s\n' % err)
+                sys.stderr.flush()
+                sys.exit(1)
+
+    def _start(self, pid):
+        """Starts the daemon""" 
+        if pid:
+            mess = "Start aborded since pid file '%s' exists.\n"
+            sys.stderr.write(mess % self.instance.pidfile)
+            sys.exit(1)
+        if hasattr(self.instance, 'before_start'):
+            self.instance.before_start()
+        self.daemonize()
+
+    def _restart(self, pid):
+        """Restarts the daemon"""
+        if hasattr(self.instance, 'before_restart'):
+            self.instance.before_restart() 
+        if not pid:
+            mess = "Could not stop, pid file '%s' missing.\n"
+            sys.stderr.write(mess % self.instance.pidfile)
+            sys.exit(1)
+        try:
+            while 1:
+                os.kill(pid, SIGTERM)
+                time.sleep(1)
+            sys.stderr.write("\n%s\n" % self.stopmsg % pid)
+            sys.stderr.flush()
+        except OSError, err:
+            err = str(err)
+            if err.find("No such process") > 0:
+                os.remove(self.instance.pidfile)
+            else:
+                sys.stderr.write('%s\n' % err)
+                sys.stderr.flush()
+        self.daemonize() 
+
+    def startstop(self, action):
         """Start/stop/restart behaviour.
         """
-        if len(sys.argv) > 1:
-            action = sys.argv[1]
-            try:
-                pf  = file(self.instance.pidfile,'r')
-                pid = int(pf.read().strip())
-                pf.close()
-            except IOError:
-                pid = None
-            if 'stop' == action or 'restart' == action:
-                self.instance.before_stop()
-                if not pid:
-                    mess = "Could not stop, pid file '%s' missing.\n"
-                    sys.stderr.write(mess % self.instance.pidfile)
-                    sys.exit(1)
-                try:
-                    while 1:
-                        os.kill(pid, SIGTERM)
-                        time.sleep(1)
-                    sys.stderr.write("\n%s\n" % self.stopmsg % pid)
-                    sys.stderr.flush()
-                except OSError, err:
-                    err = str(err)
-                    if err.find("No such process") > 0:
-                        os.remove(self.instance.pidfile)
-                        if 'stop' == action:
-                            sys.exit(0)
-                        action = 'start'
-                        pid = None
-                    else:
-                        sys.stderr.write('%s\n' % err)
-                        sys.stderr.flush()
-                        sys.exit(1)
-            if 'start' == action:
-                if pid:
-                    mess = "Start aborded since pid file '%s' exists.\n"
-                    sys.stderr.write(mess % self.instance.pidfile)
-                    sys.exit(1)
-                self.daemonize()
-                return
-        print "usage: %s start|stop|restart" % sys.argv[0]
-        sys.exit(2)
- 
+        try:
+            pf  = file(self.instance.pidfile, 'r')
+            pid = int(pf.read().strip())
+            pf.close()
+        except IOError:
+            pid = None
+
+        if action == 'stop':
+            self._stop(pid)
+        elif action == 'start':
+            self._start(pid)
+        elif action == 'restart':
+            self._restart(pid)
+        else:
+            print "usage: %s start|stop|restart" % sys.argv[0]
+            sys.exit(2)
+

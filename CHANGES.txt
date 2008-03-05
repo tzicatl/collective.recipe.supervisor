@@ -1,4 +1,5 @@
-0.1.0 (xxxx-xx-xx)
+0.1.0 (unreleased)
 ==================
 
+ - Initial implementation of Linux daemon 
  - Created recipe with ZopeSkel [Tarek Ziadé].
