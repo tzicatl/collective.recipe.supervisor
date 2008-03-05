@@ -58,8 +58,8 @@ setup(name='plone.recipe.cluster',
       include_package_data=True,
       zip_safe=False,
       install_requires=['setuptools',
-                        'zc.buildout'
-                        # -*- Extra requirements: -*-
+                        'zc.buildout',
+                        'zc.recipe.egg'
                         ],
       tests_require=tests_require,
       extras_require=dict(tests=tests_require),

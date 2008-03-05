@@ -14,6 +14,7 @@ optionflags =  (doctest.ELLIPSIS |
                 doctest.NORMALIZE_WHITESPACE |
                 doctest.REPORT_ONLY_FIRST_FAILURE)
 
+
 def setUp(test):
     zc.buildout.testing.buildoutSetUp(test)
 
