@@ -3,45 +3,51 @@ Supported options
 
 The recipe supports the following options:
 
-.. Note to recipe author!
-   ----------------------
-   For each option the recipe uses you shoud include a description
-   about the purpose of the option, the format and semantics of the
-   values it accepts, whether it is mandatory or optional and what the
-   default value is if it is omitted.
+debug
+    default option is 0. When set to 1, allows tests to run
+    on a non-blocking daemon.
 
-option1
-    Description for ``option1``...
+start
+    Multiline option. Each line is a command line that will be
+    called by the daemon when it is called with the `start` option.
+    The commands must return immediatly, because the daemon waits
+    for it before it launches the next command.
 
-option2
-    Description for ``option2``...
+    It is possible though, to push a command line in the background
+    with the `background:` suffix.
 
-(add extra commands, not daemonized, like "purge, save, etc
+stop
+    Multiline option. Each line is a command line that will be
+    called by the daemon when it is called with the `stop` option.
+    The commands must return immediatly, because the daemon waits
+    for it before it launches the next command.
+
+    It is possible to ask the daemon to kill a given process, by
+    providing a `pid:value` command line. Where `value` is either
+    a PID number, either a text files that contains a pid.
+
+    The `background:` suffix is also available.
+
+restart
+    Multiline option. Each line is a command line that will be
+    called by the daemon when it is called with the `restart` option.
+    The commands must return immediatly, because the daemon waits
+    for it before it launches the next command.
+
+    It is possible to ask the daemon to kill a given process, by
+    providing a `pid:value` command line. Where `value` is either
+    a PID number, either a text files that contains a pid.
+
+    The `background:` suffix is also available.
+
+pid-file
+    Defines the path to the PID file of the daemon.
 
 Example usage
 =============
 
-.. Note to recipe author!
-   ----------------------
-   zc.buildout provides a nice testing environment which makes it
-   relatively easy to write doctests that both demonstrate the use of
-   the recipe and test it.
-   You can find examples of recipe doctests from the PyPI, e.g.
-   
-     http://pypi.python.org/pypi/zc.recipe.egg
-
-   The PyPI page for zc.buildout contains documentation about the test
-   environment.
-
-     http://pypi.python.org/pypi/zc.buildout#testing-support
-
-   Below is a skeleton doctest that you can start with when building
-   your own tests.
-
 The `cluster` recipe allows you to create composite commands for your  
-buildout to start it. 
-
-There are three base commands:
+buildout. There are three commands:
 
 - start
 - stop
@@ -51,6 +57,33 @@ Each command is a variable with a list of commands to be
 run. The recipe then launches:
 - a daemon under Linux based system
 - a NT service under Windows
+
+A typical usage for instance is to start zeo, zope and pound::
+
+    [buildout]
+
+    ...
+
+    [cluster]
+    recipe = plone.recipe.cluster
+
+    poundctl = ${buildout:bin-directory}/pound -f ${buildout:directory}/parts/pound/etc/pound.cfg -c ${buildout:directory}/pound.pid
+
+    
+    start = 
+        ${buildout:bin-directory}/zeoserver start
+        ${buildout:bin-directory}/instance start
+        ${cluster:poundctl}
+    
+    stop = 
+        ${buildout:bin-directory}/zeoserver stop
+        ${buildout:bin-directory}/instance stop
+        pid:${buildout:directory}/pound.pid
+    
+    restart = 
+        ${buildout:bin-directory}/zeoserver restart
+        ${buildout:bin-directory}/instance restart
+        ${cluster:poundctl}
 
 Let's try this::
 
