@@ -14,7 +14,7 @@ start
     for it before it launches the next command.
 
     It is possible though, to push a command line in the background
-    with the `background:` suffix.
+    with the `background:` prefix.
 
 stop
     Multiline option. Each line is a command line that will be
@@ -26,7 +26,7 @@ stop
     providing a `pid:value` command line. Where `value` is either
     a PID number, either a text files that contains a pid.
 
-    The `background:` suffix is also available.
+    The `background:` prefix is also available.
 
 restart
     Multiline option. Each line is a command line that will be
@@ -38,7 +38,7 @@ restart
     providing a `pid:value` command line. Where `value` is either
     a PID number, either a text files that contains a pid.
 
-    The `background:` suffix is also available.
+    The `background:` prefix is also available.
 
 pid-file
     Defines the path to the PID file of the daemon.
