@@ -167,10 +167,11 @@ class Cluster(object):
 
 def main(args=None):
     if args is None:
-        args = ([], [], [], False)
+        args = ([], [], [], False, 'cluster.pid')
     args = args[:3]
-    foreground = not args[-1]
-    instance = Cluster(args=args, foreground=foreground)
+    foreground = not args[-2]
+    pidfile = args[-1]
+    instance = Cluster(args=args, foreground=foreground, pidfile=pidfile)
     daemon = Daemon(instance)
     if len(sys.argv) != 2:
         print 'usage: %s start|stop|restart|status' % sys.argv[0]
