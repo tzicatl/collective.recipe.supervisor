@@ -168,9 +168,9 @@ class Cluster(object):
 def main(args=None):
     if args is None:
         args = ([], [], [], False, 'cluster.pid')
-    args = args[:3]
     foreground = not args[-2]
     pidfile = args[-1]
+    args = args[:3]
     instance = Cluster(args=args, foreground=foreground, pidfile=pidfile)
     daemon = Daemon(instance)
     if len(sys.argv) != 2:
