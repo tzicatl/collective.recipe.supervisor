@@ -131,6 +131,7 @@ class Daemon(object):
         self.instance.run()
 
     def _kill(self, pid):
+        sys.stderr.write('Stopping PID %d\n' % pid) 
         try:
             while 1:
                 os.kill(pid, SIGTERM)
