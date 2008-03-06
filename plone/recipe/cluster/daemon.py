@@ -211,10 +211,10 @@ class Daemon(object):
 
     def _status(self, pid, pids):
         if not pid:
-            sys.stderr.write('Not running.')
+            sys.stderr.write('Not running.\n')
         else:
             # need to check that is really alive
-            sys.stderr.write('Running.')
+            sys.stderr.write('Running.\n')
  
     def startstop(self, action):
         """Start/stop/restart behaviour.
