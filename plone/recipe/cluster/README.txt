@@ -118,8 +118,13 @@ Let's create false scripts::
 Let's try to execute it::
 
     >>> print system(script)
-    usage: /sample-buildout/bin/cluster start|stop|restart
+    usage: /sample-buildout/bin/cluster start|stop|restart|status
     <BLANKLINE>
+
+Let's ask for the status::
+
+    >>> print system('%s status' % script)
+    Not running.
 
 Ah right, let's start it !
 ::
@@ -130,9 +135,15 @@ Ah right, let's start it !
     script 1
     Running ...script2 start
     script 2
+    Child PIDs: ..., ...
     Started with pid ...
     Cluster is alive...
     <BLANKLINE>
+
+Let's ask for the status::
+    
+    >>> print system('%s status' % script)
+    Running.
 
 We should not be able to start it twice::
     

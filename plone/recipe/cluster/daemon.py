@@ -52,6 +52,7 @@ Adapted for plone.recipe.cluster by Tarek Ziadé:
   - added some stderr outputs when the daemon is stopped.
   - a lot of refactoring
   - added child subprocess managment
+  - added the status
 """
 
 __author__ = """Robert Niederreiter <office@squarewave.at>"""
@@ -208,6 +209,13 @@ class Daemon(object):
             self._display_pids(child_pids)
         self.daemonize(child_pids) 
 
+    def _status(self, pid, pids):
+        if not pid:
+            sys.stderr.write('Not running.')
+        else:
+            # need to check that is really alive
+            sys.stderr.write('Running.')
+ 
     def startstop(self, action):
         """Start/stop/restart behaviour.
         """
@@ -227,6 +235,8 @@ class Daemon(object):
             self._start(pid)
         elif action == 'restart':
             self._restart(pid, child_pids)
+        elif action == 'status':
+            self._status(pid, child_pids)
         else:
             print "usage: %s start|stop|restart" % sys.argv[0]
             sys.exit(2)

@@ -78,8 +78,8 @@ class Cluster(object):
         self.stderr.write('Cluster is alive...\n')
         self.stderr.flush()
         # now looping for ever
-        while True:
-            time.sleep(1)
+        #while True:
+        #    time.sleep(1)
 
 def main(args=None):
     if args is None:
@@ -87,7 +87,7 @@ def main(args=None):
     instance = Cluster(args=args)
     daemon = Daemon(instance)
     if len(sys.argv) != 2:
-        print 'usage: %s start|stop|restart' % sys.argv[0]
+        print 'usage: %s start|stop|restart|status' % sys.argv[0]
         sys.exit(1)
     action = sys.argv[1]
     daemon.startstop(action)
