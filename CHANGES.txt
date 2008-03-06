@@ -1,5 +1,8 @@
 0.1.0 (unreleased)
 ==================
 
- - Initial implementation of Linux daemon 
- - Created recipe with ZopeSkel [Tarek Ziadé].
+ - Initial implementation of Linux daemon.
+   [tarek]
+
+ - Created recipe with ZopeSkel. 
+   [tarek]
