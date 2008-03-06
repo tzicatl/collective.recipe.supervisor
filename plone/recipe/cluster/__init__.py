@@ -31,12 +31,13 @@ class Recipe(object):
         start = options['start'].strip()
         stop = options['stop'].strip()
         restart = options.get('restart', '')
-        
+        debug = options.get('debug', 'false')
+
         zc.buildout.easy_install.scripts(
             [(script_name, 'plone.recipe.cluster.ctl', 'main')],
             ws, python, bin_directory,
             extra_paths=extra_paths, 
-            arguments=(start, stop, restart))
+            arguments=(start, stop, restart, debug))
 
         # Return files that were created by the recipe. The buildout
         # will remove all returned files upon reinstall.

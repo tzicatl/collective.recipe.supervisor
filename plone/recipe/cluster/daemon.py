@@ -131,7 +131,7 @@ class Daemon(object):
         self.instance.run()
 
     def _kill(self, pid):
-        sys.stderr.write('Stopping PID %d\n' % pid) 
+        #sys.stderr.write('Stopping PID %d\n' % pid) 
         try:
             while 1:
                 os.kill(pid, SIGTERM)
@@ -163,7 +163,10 @@ class Daemon(object):
             self._display_pids(pids)
             # waiting for pids
             for subpid in pids:
-                os.waitpid(subpid, 0)
+                try:
+                    os.waitpid(subpid, 0)
+                except OSError:
+                    pass # the pid is gone...
         
         # now stopping the main 
         if self._kill(pid):

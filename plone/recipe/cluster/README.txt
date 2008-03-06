@@ -61,16 +61,16 @@ Let's try this::
     ... index = http://pypi.python.org/simple
     ... [cluster]
     ... recipe = plone.recipe.cluster
+    ... debug = 1
     ... start = 
-    ...    ${buildout:bin-directory}/script1 start
+    ...    background:${buildout:bin-directory}/script1 
     ...    ${buildout:bin-directory}/script2 start
     ...
     ... stop = 
-    ...    ${buildout:bin-directory}/script1 stop
     ...    ${buildout:bin-directory}/script2 stop
     ... 
     ... restart = 
-    ...    ${buildout:bin-directory}/script1 restart
+    ...    background:${buildout:bin-directory}/script1 
     ...    ${buildout:bin-directory}/script2 restart
     ...
     ... """)
@@ -103,17 +103,24 @@ Now let's see the script that was created::
 
 Let's create false scripts::
 
-    >>> script1 = join(sample_buildout, 'bin', 'script1')
-    >>> f = open(script1, 'w')
-    >>> f.write('echo script 1')
-    >>> f.close()
-    >>> import os
-    >>> os.chmod(script1, 0770)
-    >>> script2 = join(sample_buildout, 'bin', 'script2') 
+    >>> script2 = join(sample_buildout, 'bin', 'script2')
     >>> f = open(script2, 'w')
     >>> f.write('echo script 2')
     >>> f.close()
+    >>> import os
     >>> os.chmod(script2, 0770)
+    
+    >>> script1 = join(sample_buildout, 'bin', 'script1') 
+    >>> f = open(script1, 'w')
+    >>> import sys
+    >>> f.write("""\
+    ... #!%s
+    ... import time
+    ... while 1:
+    ...     time.sleep(0.1)
+    ... """ % sys.executable)
+    >>> f.close()
+    >>> os.chmod(script1, 0770)
 
 Let's try to execute it::
 
@@ -131,8 +138,9 @@ Ah right, let's start it !
 
     >>> print system('%s start' % script)
     Cluster is starting...
-    Running ...script1 start
-    script 1
+    Running in background ...script1
+    Background pid is ...
+    Background subpid is ...
     Running ...script2 start
     script 2
     Child PIDs: ..., ...
@@ -162,11 +170,6 @@ Let's stop it::
 Let's restart it::
 
     >>> print system('%s restart' % script)
-    Cluster is restarting...
-    Running ...script1 restart
-    script 1
-    Running ...script2 restart
-    script 2
     Could not stop, pid file 'cluster.pid' missing.
     <BLANKLINE>
 

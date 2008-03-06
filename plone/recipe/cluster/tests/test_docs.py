@@ -14,7 +14,6 @@ optionflags =  (doctest.ELLIPSIS |
                 doctest.NORMALIZE_WHITESPACE |
                 doctest.REPORT_ONLY_FIRST_FAILURE)
 
-
 def setUp(test):
     zc.buildout.testing.buildoutSetUp(test)
 
@@ -23,6 +22,8 @@ def setUp(test):
 
     # Install any other recipes that should be available in the tests
     #zc.buildout.testing.install('collective.recipe.foobar', test)
+    from plone.recipe.cluster import ctl
+    ctl.DEBUG = True
 
 def test_suite():
     suite = unittest.TestSuite((
