@@ -50,6 +50,8 @@ Adapted for plone.recipe.cluster by Tarek Ziadé:
   - added a before_stop hook
   - made stdin, stdout, stderr compatible with sys ones
   - added some stderr outputs when the daemon is stopped.
+  - a lot of refactoring
+  - added child subprocess managment
 """
 
 __author__ = """Robert Niederreiter <office@squarewave.at>"""
@@ -73,7 +75,7 @@ class Daemon(object):
     def __init__(self, instance):
         self.instance = instance
 
-    def daemonize(self):
+    def daemonize(self, child_pids):
         """Fork the process into the background.
         """
         try: 
@@ -117,7 +119,8 @@ class Daemon(object):
         sys.stderr.write("%s\n" % self.startmsg % pid)
         sys.stderr.flush()
         if self.instance.pidfile:
-            file(self.instance.pidfile, 'w+').write("%s\n" % pid)
+            pid_list = ':'.join([pid]+[str(p) for p in child_pids])
+            file(self.instance.pidfile, 'w+').write("%s\n" % pid_list)
     
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
@@ -126,14 +129,7 @@ class Daemon(object):
         # now let's run the code
         self.instance.run()
 
-    def _stop(self, pid):
-        """stopping"""
-        if hasattr(self.instance, 'before_stop'):
-            self.instance.before_stop()
-        if not pid:
-            mess = "Could not stop, pid file '%s' missing.\n"
-            sys.stderr.write(mess % self.instance.pidfile)
-            sys.exit(1)
+    def _kill(self, pid):
         try:
             while 1:
                 os.kill(pid, SIGTERM)
@@ -142,13 +138,41 @@ class Daemon(object):
             sys.stderr.flush()
         except OSError, err:
             err = str(err)
-            if err.find("No such process") > 0:
-                os.remove(self.instance.pidfile)
-                sys.exit(0)
-            else:
+            if not err.find("No such process") > 0:
                 sys.stderr.write('%s\n' % err)
                 sys.stderr.flush()
-                sys.exit(1)
+                return False
+        return True
+
+    def _stop(self, pid, child_pids):
+        """stopping"""
+        if not pid:
+            mess = "Could not stop, pid file '%s' missing.\n"
+            sys.stderr.write(mess % self.instance.pidfile)
+            sys.exit(1)
+       
+        # stopping childs if they are still alive
+        for child_pid in child_pids:
+            self._kill(pid)
+    
+        # calling before_stop
+        if hasattr(self.instance, 'before_stop'):
+            pids = self.instance.before_stop()
+            self._display_pids(pids)
+            # waiting for pids
+            for subpid in pids:
+                os.waitpid(subpid, 0)
+        
+        # now stopping the main 
+        if self._kill(pid):
+            os.remove(self.instance.pidfile)
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+    def _display_pids(self, pids):
+        pids = [str(p) for p in pids]
+        sys.stderr.write('Child PIDs: %s\n' % ', '.join(pids)) 
 
     def _start(self, pid):
         """Starts the daemon""" 
@@ -157,48 +181,52 @@ class Daemon(object):
             sys.stderr.write(mess % self.instance.pidfile)
             sys.exit(1)
         if hasattr(self.instance, 'before_start'):
-            self.instance.before_start()
-        self.daemonize()
+            child_pids = self.instance.before_start()
+            self._display_pids(child_pids)
+        else:
+            child_pids = []
+        self.daemonize(child_pids)
 
-    def _restart(self, pid):
+    def _restart(self, pid, child_pids):
         """Restarts the daemon"""
-        if hasattr(self.instance, 'before_restart'):
-            self.instance.before_restart() 
         if not pid:
             mess = "Could not stop, pid file '%s' missing.\n"
             sys.stderr.write(mess % self.instance.pidfile)
             sys.exit(1)
-        try:
-            while 1:
-                os.kill(pid, SIGTERM)
-                time.sleep(1)
-            sys.stderr.write("\n%s\n" % self.stopmsg % pid)
-            sys.stderr.flush()
-        except OSError, err:
-            err = str(err)
-            if err.find("No such process") > 0:
-                os.remove(self.instance.pidfile)
-            else:
-                sys.stderr.write('%s\n' % err)
-                sys.stderr.flush()
-        self.daemonize() 
+
+        # stopping childs if they are still alive
+        for child_pid in child_pids:
+            self._kill(pid)
+    
+        # now stopping the main 
+        if self._kill(pid):
+            os.remove(self.instance.pidfile)
+    
+        # starting it back
+        if hasattr(self.instance, 'before_restart'):
+            child_pids = self.instance.before_restart()
+            self._display_pids(child_pids)
+        self.daemonize(child_pids) 
 
     def startstop(self, action):
         """Start/stop/restart behaviour.
         """
         try:
             pf  = file(self.instance.pidfile, 'r')
-            pid = int(pf.read().strip())
+            pids = [int(pid) for pid in pf.read().strip().split(':')]
+            pid = pids[0]
+            child_pids = pids[1:]
             pf.close()
         except IOError:
             pid = None
+            child_pids = []
 
         if action == 'stop':
-            self._stop(pid)
+            self._stop(pid, child_pids)
         elif action == 'start':
             self._start(pid)
         elif action == 'restart':
-            self._restart(pid)
+            self._restart(pid, child_pids)
         else:
             print "usage: %s start|stop|restart" % sys.argv[0]
             sys.exit(2)

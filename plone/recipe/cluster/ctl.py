@@ -4,6 +4,7 @@
 import sys
 import time
 import os
+from subprocess import Popen, PIPE
 
 from plone.recipe.cluster.daemon import Daemon
 
@@ -28,44 +29,49 @@ class Cluster(object):
                 if arg.strip() != '']
 
     def _run_commands(self, pool):
-        for command in pool:
-            res = self._system(command)
-            if not res:
+        def _run(command):
+            pid = self._system(command)
+            if not pid:
                 self.stderr.write('Command "%s" failed\n' % command)  
                 self.stderr.flush()
                 sys.exit(1)
-
+            return pid
+        return [_run(command) for command in pool]
+    
     def before_start(self):
-        """Runned before the daemon is starting"""
+        """Runned before the daemon is starting.
+
+        Returns a list of PIDs"""
         self.stderr.write('Cluster is starting...\n')
         self.stderr.flush()
-        self._run_commands(self.starts)
+        return self._run_commands(self.starts)
  
     def before_stop(self):
-        """Runned before the daemon is stopped"""
+        """Runned before the daemon is stopped.
+
+        Returns a list of PIDs"""
         self.stderr.write('Cluster is going down...\n')
         self.stderr.flush()
-        self._run_commands(self.stops)
+        return self._run_commands(self.stops)
  
     def before_restart(self):
-        """Runned before the daemon is restarting"""
+        """Runned before the daemon is restarting.
+
+        Returns a list of PIDs"""
         self.stderr.write('Cluster is restarting...\n')
         self.stderr.flush()
-        self._run_commands(self.restarts)
+        return self._run_commands(self.restarts)
         
     def _system(self, command, input=''):
         self.stderr.write('Running %s\n' % command)
         self.stderr.flush()
-        i, o, e = os.popen3(command)
-        if input:
-            i.write(input)
-        i.close()
-        result = o.read() + e.read()
-        o.close()
-        e.close()
-        self.stderr.write(result)
+        p = Popen([command], shell=True, stderr=PIPE,
+                  stdin=PIPE, stdout=PIPE, close_fds=True)
+        result = p.stdout.read()
+        errors =  p.stderr.read()
+        self.stderr.write(result + errors)
         self.stderr.flush() 
-        return True  # see how to return false in case of a problem
+        return p.pid  # see how to return false in case of a problem
 
     def run(self):
         """Dameon code"""
