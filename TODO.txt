@@ -1,7 +1,3 @@
-- check plone_hosting in ZopeSkel
-- try to add pound, varnish
-- add extra-commands to allow running a free command
-  sequence
+- implement win32 version, based on NT services
 
-- implement win32 version
 
