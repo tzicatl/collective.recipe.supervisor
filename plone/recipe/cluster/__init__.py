@@ -31,7 +31,7 @@ class Recipe(object):
         start = options['start'].strip()
         stop = options['stop'].strip()
         restart = options.get('restart', '')
-        debug = options.get('debug', 'false')
+        debug = options.get('debug', '0')
         pid_file = options.get('pid-file', 'cluster.pid')
 
         zc.buildout.easy_install.scripts(

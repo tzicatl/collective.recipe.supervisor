@@ -131,7 +131,7 @@ class Daemon(object):
         self.instance.run()
 
     def _kill(self, pid):
-        #sys.stderr.write('Stopping PID %d\n' % pid) 
+        sys.stderr.write('Stopping PID %d\n' % pid) 
         try:
             while 1:
                 os.kill(pid, SIGTERM)
@@ -155,7 +155,7 @@ class Daemon(object):
        
         # stopping childs if they are still alive
         for child_pid in child_pids:
-            self._kill(pid)
+            self._kill(child_pid)
     
         # calling before_stop
         if hasattr(self.instance, 'before_stop'):
@@ -232,7 +232,6 @@ class Daemon(object):
         except IOError:
             pid = None
             child_pids = []
-
         if action == 'stop':
             self._stop(pid, child_pids)
         elif action == 'start':

@@ -5,8 +5,8 @@ import sys
 import time
 import os
 from pty import fork as forkpty
-from subprocess import Popen, PIPE
-from signal import SIGTERM
+from subprocess import Popen, PIPE, call
+from signal import signal, SIGTERM
 
 from plone.recipe.cluster.daemon import Daemon
 
@@ -32,7 +32,7 @@ class Cluster(object):
                 if arg.strip() != '']
 
     def _kill(self, pid):
-        #self.stderr.write('Stopping PID %d\n' % pid) 
+        self.stderr.write('Stopping PID %d\n' % pid) 
         try:
             while 1:
                 os.kill(pid, SIGTERM)
@@ -79,13 +79,14 @@ class Cluster(object):
             else:
                 background = False
             pid = self._system(command, background)
-            if not pid:
+            if pid is None:
                 self.stderr.write('Command "%s" failed\n' % command)  
                 self.stderr.flush()
                 sys.exit(1)
             return pid
-        res = [_run(command) for command in pool]
-        return [pid for pid in res if pid is not None]
+        
+        pids = [_run(command) for command in pool]
+        return [pid for pid in pids if pid is not None]
     
     def before_start(self):
         """Runned before the daemon is starting.
@@ -112,7 +113,6 @@ class Cluster(object):
         return self._run_commands(self.restarts)
         
     def _system(self, command, background=False):
-                
         # foreground
         if not background:
             self.stderr.write('Running %s\n' % command)
@@ -129,30 +129,7 @@ class Cluster(object):
         else:
             self.stderr.write('Running in background %s\n' % command)  
             self.stderr.flush()
-            # background, let's fork
-            curdir = os.curdir
-            child_pid, fd = forkpty()
-            if child_pid == 0:
-                os.chdir(curdir)
-                p = Popen([command], shell=True)
-                # returning the pid to the master
-                sys.stderr.write('%d' % p.pid)
-                sys.stderr.write('#')
-                # stay here
-                os.waitpid(p.pid, 0)
-                # bye
-                sys.exit(0)
-            else: 
-                # XXX see how to get child
-                # output
-                sub_pid = ''
-                n = os.read(fd, 1)
-                while n in '0123456789':
-                    sub_pid += n
-                    n = os.read(fd, 1) 
-                sub_pid = int(sub_pid)
-                self.stderr.write('Background pid is %d\n' % child_pid)
-                self.stderr.write('Background subpid is %d\n' % sub_pid)
+            child_pid = Popen([command]).pid
         return child_pid  # see how to return false in case of a problem
 
     def run(self):
@@ -168,7 +145,7 @@ class Cluster(object):
 def main(args=None):
     if args is None:
         args = ([], [], [], False, 'cluster.pid')
-    foreground = not args[-2]
+    foreground = not bool(args[-2])
     pidfile = args[-1]
     args = args[:3]
     instance = Cluster(args=args, foreground=foreground, pidfile=pidfile)
