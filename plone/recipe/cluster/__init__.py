@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Recipe cluster"""
+"""Recipe cluster
+
+$Id$
+"""
 import os
+import sys
 
 import zc.recipe.egg
 from zc.buildout import UserError
@@ -34,11 +38,18 @@ class Recipe(object):
         debug = options.get('debug', '0')
         pid_file = options.get('pid-file', 'cluster.pid')
 
-        zc.buildout.easy_install.scripts(
-            [(script_name, 'plone.recipe.cluster.ctl', 'main')],
-            ws, python, bin_directory,
-            extra_paths=extra_paths, 
-            arguments=(start, stop, restart, debug, pid_file))
+        if sys.platform == 'win32':
+            zc.buildout.easy_install.scripts(
+                [(script_name, 'plone.recipe.cluster.service', 'main')],
+                ws, python, bin_directory,
+                extra_paths=extra_paths, 
+                arguments=(start, stop, restart, debug, pid_file))
+        else:
+            zc.buildout.easy_install.scripts(
+                [(script_name, 'plone.recipe.cluster.ctl', 'main')],
+                ws, python, bin_directory,
+                extra_paths=extra_paths, 
+                arguments=(start, stop, restart, debug, pid_file))
 
         # Return files that were created by the recipe. The buildout
         # will remove all returned files upon reinstall.
