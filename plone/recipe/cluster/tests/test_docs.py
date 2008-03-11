@@ -22,8 +22,9 @@ def setUp(test):
 
     # Install any other recipes that should be available in the tests
     #zc.buildout.testing.install('collective.recipe.foobar', test)
-    from plone.recipe.cluster import ctl
-    ctl.DEBUG = True
+    if sys.platform == 'win32':
+        from plone.recipe.cluster import ctl
+        ctl.DEBUG = True
 
 def test_suite():
     if sys.platform == 'win32':
