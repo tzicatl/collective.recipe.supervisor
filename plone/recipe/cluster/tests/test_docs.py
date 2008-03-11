@@ -3,7 +3,7 @@
 Doctest runner for 'plone.recipe.cluster'.
 """
 __docformat__ = 'restructuredtext'
-
+import sys
 import unittest
 import zc.buildout.tests
 import zc.buildout.testing
@@ -26,9 +26,14 @@ def setUp(test):
     ctl.DEBUG = True
 
 def test_suite():
+    if sys.platform == 'win32':
+        doctest_file = '../README-win32.txt'
+    else:
+        doctest_file = '../README.txt'
+
     suite = unittest.TestSuite((
             doctest.DocFileSuite(
-                '../README.txt',
+                doctest_file,
                 setUp=setUp,
                 tearDown=zc.buildout.testing.buildoutTearDown,
                 optionflags=optionflags,
