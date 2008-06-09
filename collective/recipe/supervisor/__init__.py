@@ -92,7 +92,7 @@ class Recipe(object):
         dscript = zc.recipe.egg.Egg(self.buildout,
               self.name,
               {'eggs': 'supervisor',
-               'scripts': '%sd=supervisord' % self.name,
+               'scripts': 'supervisord=%sd' % self.name,
                'initialization': 'import sys; sys.argv.extend(["-c","%s"])' % \
                                   conf_file})
 
@@ -103,7 +103,7 @@ class Recipe(object):
         ctlscript = zc.recipe.egg.Egg(self.buildout,
                     self.name,
                     {'eggs': 'supervisor',
-                     'scripts': '%sctl=supervisorctl' % self.name,
+                     'scripts': 'supervisorctl=%sctl' % self.name,
                      'initialization': 'import sys; sys.argv[1:1] = %s' % init,
                      'arguments': 'sys.argv[1:]'})
 
