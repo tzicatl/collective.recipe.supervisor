@@ -24,7 +24,7 @@ password
 
 supervisord-conf
     Full path to where the recipe puts the supervisord configuration file. 
-    Defaults to ${buildout:directory}/bin/supervisord.conf
+    Defaults to ${buildout:directory}/parts/${name}/supervisord.conf
 
 logfile
     The full path to the supervisord log file. Defaults to 
