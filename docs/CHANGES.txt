@@ -1,4 +1,4 @@
-0.5 (unreleased)
+0.5 (2008-08-23)
 ================
 
 - Adding eventlistners option for use as event notification framework.  
