@@ -31,7 +31,8 @@ supervisord-conf
     Defaults to ${buildout:directory}/parts/${name}/supervisord.conf
 
 supervisord-conf-override
-    Full path to a custom config file.
+    Full path to a custom config file.  Note that you still need user and 
+    password specified when using this. (for supervisorctl)
 
 logfile
     The full path to the supervisord log file. Defaults to 
