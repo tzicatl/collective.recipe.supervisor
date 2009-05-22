@@ -30,6 +30,9 @@ supervisord-conf
     Full path to where the recipe puts the supervisord configuration file. 
     Defaults to ${buildout:directory}/parts/${name}/supervisord.conf
 
+supervisord-conf-override
+    Full path to a custom config file.
+
 logfile
     The full path to the supervisord log file. Defaults to 
     ${buildout:directory}/var/log/supervisord.log

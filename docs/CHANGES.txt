@@ -1,7 +1,7 @@
 0.9 (unreleased)
 ================
 
- 
+ - Add supervisord-conf-override to allow completely custom config files (no autogeneration)
 
 0.8 (2009-04-27)
 ================

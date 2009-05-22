@@ -136,10 +136,15 @@ class Recipe(object):
                                  self.name, 'supervisord.conf')
         if self.options.get('supervisord-conf', None) is not None:
             conf_file = self.options.get('supervisord-conf')
-        if not os.path.exists(os.path.dirname(conf_file)):
-            os.makedirs(os.path.dirname(conf_file))
 
-        open(conf_file, 'w').write(config_data)
+        conf_override = self.options.get('supervisord-conf-override',None)
+
+        if conf_override is None:
+            if not os.path.exists(os.path.dirname(conf_file)):
+                os.makedirs(os.path.dirname(conf_file))
+            open(conf_file, 'w').write(config_data)
+        else:
+            conf_file = conf_override
 
         dscript = zc.recipe.egg.Egg(self.buildout,
               self.name,
