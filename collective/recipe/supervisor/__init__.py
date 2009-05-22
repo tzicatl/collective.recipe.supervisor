@@ -179,12 +179,15 @@ class Recipe(object):
                                                 {'eggs':eggs}).install())
             
         
+        modified = list(dscript.install()) + \
+                   list(memscript.install()) + \
+                   list(ctlscript.install()) + \
+                   extra_eggs
 
-        return list(dscript.install()) + \
-               list(memscript.install()) + \
-               list(ctlscript.install()) + \
-               extra_eggs + \
-               [conf_file]
+        if conf_override is None:
+            modified.append(conf_file)
+
+        return modified
 
     def update(self):
         """Updater"""
