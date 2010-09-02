@@ -62,6 +62,7 @@ setup(name='collective.recipe.supervisor',
       install_requires=['setuptools',
                         'zc.buildout',
                         'zc.recipe.egg',
+                        'supervisor',
                         # -*- Extra requirements: -*-
                         ],
       tests_require=tests_require,
